@@ -1,0 +1,63 @@
+# Credenciais e variáveis de ambiente — NUNCA versionar
+.env
+.env.local
+.env.*.local
+.env.homologacao
+/logs_nssm
+logs_nssm/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.installed.cfg
+*.so
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+ENV/
+Docs/
+
+# Logs
+*.log
+logs/
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.user
+
+# Testes e cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Builds do frontend
+OL_Web/dist/
+OL_Web/node_modules/
+
+# Arquivos operacionais gerados
+OL_Services/Output/
+OL_Services/registro_backup/
+OL_Services/registro_envio/
+OL_Services/Test/
+
+# ol_core editable install
+ol_core/*.egg-info/
+
+# Backups de deploy e binários de terceiros
+_deploy_backups/
+caddy/
+
+# Arquivos de teste/homologação gerados localmente (pedidos simulados, backups, etc.)
+OL_LOCAL/

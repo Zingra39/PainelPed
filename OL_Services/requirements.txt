@@ -1,0 +1,19 @@
+# ol_core instalado em modo editável — caminho relativo à pasta de onde o pip
+# roda: execute `pip install -r requirements.txt` de dentro de OL_Services/.
+-e ../OL_CORE
+altgraph==0.17.5
+numpy==2.4.3
+packaging==26.0
+pandas==3.0.1
+pefile==2024.8.26
+pyinstaller==6.19.0
+pyinstaller-hooks-contrib==2026.3
+PyMySQL==1.1.2
+pyodbc==5.3.0
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.2
+pywin32-ctypes==0.2.3
+setuptools==82.0.1
+six==1.17.0
+tzdata==2025.3
+watchdog==6.0.0

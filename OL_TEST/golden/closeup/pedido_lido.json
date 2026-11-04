@@ -1,0 +1,32 @@
+{
+  "nome_arquivo": "PEDIDO_2026102900123456787P_57107095000164.txt",
+  "cnpj_cliente": "057107095000164",
+  "numero_pedido_ol": "2026102900123456787P",
+  "data_pedido": "2026-10-29 00:00:00",
+  "observacao": "ENTREGAR ATE AS 10H. PORTA 2",
+  "id_cond": 3692,
+  "itens": [
+    {
+      "numero_pedido_ol": "2026102900123456787P",
+      "cnpj_cliente": "057107095000164",
+      "ean": "7891234567895",
+      "quantidade_solicitada": 10,
+      "desconto": 12.5,
+      "id_cond": 3692,
+      "preco": 8.9,
+      "quantidade_atendida": 0,
+      "codigo_produto": 101
+    },
+    {
+      "numero_pedido_ol": "2026102900123456787P",
+      "cnpj_cliente": "057107095000164",
+      "ean": "0000000789123",
+      "quantidade_solicitada": 24,
+      "desconto": 33.34,
+      "id_cond": 0,
+      "preco": 0,
+      "quantidade_atendida": 0,
+      "codigo_produto": 0
+    }
+  ]
+}

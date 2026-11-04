@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+/* Cores da marca como tokens do Tailwind: geram `bg-brand`, `text-brand`,
+   `border-brand`, `ring-brand/30`, `bg-brand-dark`, `text-navy` etc. e
+   também as variáveis CSS (`var(--color-brand)`). Para JS (gráficos, inline
+   gradients), use as constantes de `lib/cores.ts`. */
+@theme {
+  --color-brand: #285BBC;
+  --color-brand-dark: #37589B;
+  --color-navy: #14213D;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #f0f2f6;
+  color: #0f172a;
+  margin: 0;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c4c9d4; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #9aa3b2; }

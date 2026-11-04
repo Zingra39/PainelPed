@@ -1,0 +1,181 @@
+# ============================================================================
+# PainelOL — Pipeline de Build + Deploy (RASCUNHO PARA REVISÃO)
+# ----------------------------------------------------------------------------
+# Este arquivo NÃO foi commitado no repositório. É um rascunho para você
+# revisar, ajustar os placeholders marcados com <PREENCHER> e só então
+# decidir se ele entra no repo (branch dedicada, PR, etc.).
+#
+# Fluxo: push em master -> build/lint/test (agente hospedado da Microsoft)
+#        -> deploy em produção (agente self-hosted no servidor local),
+#        atrás de um gate de aprovação manual configurado no Environment
+#        "producao" (Project Settings > Environments > producao > Approvals
+#        and checks — isso é configurado direto no portal do Azure DevOps,
+#        não no YAML).
+# ============================================================================
+
+trigger:
+  branches:
+    include:
+      - master
+
+pr: none
+
+variables:
+  webDir: 'OL_Web'
+  apiDir: 'OL_API'
+  coreDir: 'OL_CORE'
+  servicesDir: 'OL_Services'
+  testDir: 'OL_TEST'
+
+stages:
+  # ==========================================================================
+  # STAGE 1 — Build & Test (agente self-hosted SITE_POOL)
+  # ==========================================================================
+  - stage: BuildAndTest
+    displayName: 'Build & Test'
+    jobs:
+
+      - job: Web
+        displayName: 'Frontend (React/Vite)'
+        pool:
+          name: 'SITE_POOL'
+        steps:
+          - script: |
+              node --version
+              npm --version
+            displayName: 'Verifica Node/npm já instalados no agente'
+          - script: |
+              cd $(webDir)
+              call npm ci
+              call npm run lint
+              call npm run build
+            displayName: 'npm ci / lint / build'
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(webDir)/dist'
+              artifact: 'web-dist'
+
+      - job: Core
+        displayName: 'ol_core (wheel compartilhado)'
+        pool:
+          name: 'SITE_POOL'
+        steps:
+          - script: python --version
+            displayName: 'Verifica Python já instalado no agente'
+          - script: |
+              cd $(coreDir)
+              python -m pip install --upgrade pip build
+              python -m build --wheel
+            displayName: 'Build wheel do ol_core'
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(coreDir)/dist'
+              artifact: 'ol_core-wheel'
+
+      - job: Api
+        displayName: 'OL_API (empacota código-fonte)'
+        pool:
+          name: 'SITE_POOL'
+        steps:
+          - script: python --version
+            displayName: 'Verifica Python já instalado no agente'
+          - script: |
+              cd $(apiDir)
+              python -m pip install --upgrade pip
+              python -m pip install -r requirements.txt
+            displayName: 'Valida instalação das dependências'
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: '$(apiDir)'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/api-src.zip'
+              # <PREENCHER> ajuste os excludes conforme necessário
+              # (não versionar venv/, __pycache__, .env, logs/)
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/api-src.zip'
+              artifact: 'api-src'
+
+      - job: Services
+        displayName: 'OL_Services (build PyInstaller)'
+        pool:
+          name: 'SITE_POOL'
+        steps:
+          - script: python --version
+            displayName: 'Verifica Python já instalado no agente'
+          - script: |
+              cd $(servicesDir)
+              python -m pip install --upgrade pip
+              python -m pip install -r requirements.txt
+              REM <PREENCHER> confirmar os .spec ou o comando pyinstaller usado hoje
+              REM para cada script (coleta_pedidos_ftp, cancelados, espelhos, retornos, importa_pedidos)
+              pyinstaller --onefile coleta_pedidos_ftp.py
+              pyinstaller --onefile cancelados.py
+              pyinstaller --onefile espelhos.py
+              pyinstaller --onefile retornos.py
+              pyinstaller --onefile importa_pedidos.py
+            displayName: 'Build executáveis (PyInstaller)'
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(servicesDir)/dist'
+              artifact: 'services-exe'
+
+      - job: Tests
+        displayName: 'Testes (pytest)'
+        pool:
+          name: 'SITE_POOL'
+        steps:
+          - script: python --version
+            displayName: 'Verifica Python já instalado no agente'
+          - script: |
+              cd $(testDir)
+              python -m pip install --upgrade pip
+              python -m pip install -r requirements-test.txt
+              REM <PREENCHER> confirmar se os testes de api/ precisam de um MySQL
+              REM disponível no agente (ex.: container de serviço) e se os testes
+              REM de integracao/ dependem do SQL Server do ERP / FTP real — nesse
+              REM caso eles NÃO devem rodar aqui, e sim ficar de fora do gate
+              REM automático (rodar manualmente antes do deploy de produção).
+              pytest api -v
+            displayName: 'pytest (unitários / API)'
+            continueOnError: false
+
+  # ==========================================================================
+  # STAGE 2 — Deploy Produção (agente self-hosted no servidor local)
+  # ==========================================================================
+  - stage: DeployProducao
+    displayName: 'Deploy — Produção'
+    dependsOn: BuildAndTest
+    condition: succeeded()
+    jobs:
+      - deployment: DeployProd
+        displayName: 'Deploy no servidor'
+        environment: 'producao'   # <PREENCHER> crie este Environment no Azure
+                                    # DevOps e configure "Approvals" para exigir
+                                    # aprovação manual antes de cada deploy
+        pool:
+          name: 'SITE_POOL'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: web-dist
+                - download: current
+                  artifact: ol_core-wheel
+                - download: current
+                  artifact: api-src
+                - download: current
+                  artifact: services-exe
+                - task: PowerShell@2
+                  displayName: 'Executa deploy.ps1'
+                  inputs:
+                    filePath: '$(System.DefaultWorkingDirectory)/Claude outputs/deploy.ps1'
+                    # O deploy.ps1 vem do próprio repo (checkout normal) — está
+                    # versionado em Claude outputs/deploy.ps1, não na raiz.
+                    arguments: >
+                      -WebArtifact "$(Pipeline.Workspace)/web-dist"
+                      -CoreWheelArtifact "$(Pipeline.Workspace)/ol_core-wheel"
+                      -ApiArtifact "$(Pipeline.Workspace)/api-src"
+                      -ServicesArtifact "$(Pipeline.Workspace)/services-exe"

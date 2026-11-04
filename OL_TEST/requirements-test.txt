@@ -1,0 +1,5 @@
+# ol_core instalado em modo editável — caminho relativo à pasta de onde o pip
+# roda: execute `pip install -r requirements-test.txt` de dentro de OL_TEST/.
+-e ../OL_CORE
+pytest>=8.0.0
+httpx2
